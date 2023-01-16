@@ -140,6 +140,7 @@ class DataStore {
     store = {};
     store[LOCAL_GROCERY_LIST] = [];
     store[LOCAL_GROCERY_CATALOGUE] = GROCERY_CATALOGUE;
+    store[LOCAL_RECIPES] = RECIPES.map(recipe => ({ recipe: recipe, active: true }));
   }
   /**
    * getRecipes

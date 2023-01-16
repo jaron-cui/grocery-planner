@@ -2,10 +2,14 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import GroceryList from './GroceryList';
+import MealSchedule from './MealSchedule';
 import RECIPES, { DATASTORE, GroceryListItem } from './src/data';
+
+type Screen = 'grocery-list' | 'cook'
 
 DATASTORE.addToGroceryList(DATASTORE.getGroceryCatalogue().map(product => ({ name: product.name, count: 1 })))
 export default function App() {
+  const [screen, setScreen] = useState<Screen>('cook');
   const [groceryItems, setGroceryItems] = useState<GroceryListItem[]>(DATASTORE.getGroceryList());
   
   function removeGroceryItem(index: number) {
@@ -20,7 +24,8 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <GroceryList items={groceryItems} addItem={addGroceryItem} removeItem={removeGroceryItem}></GroceryList>
+      {screen === 'grocery-list' && <GroceryList items={groceryItems} addItem={addGroceryItem} removeItem={removeGroceryItem}></GroceryList>}
+      {screen === 'cook' && <MealSchedule/>}
       <StatusBar style="auto" />
     </View>
   );
