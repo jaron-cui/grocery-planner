@@ -9,7 +9,9 @@ export default function App() {
   const [groceryItems, setGroceryItems] = useState<GroceryListItem[]>(DATASTORE.getGroceryList());
   
   function removeGroceryItem(index: number) {
-    setGroceryItems(groceryItems.splice(index, 1));
+    const copy = [...groceryItems];
+    copy.splice(index, 1);
+    setGroceryItems(copy);
   }
 
   function addGroceryItem(groceryItem: GroceryListItem) {

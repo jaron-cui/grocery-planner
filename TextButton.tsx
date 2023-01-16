@@ -9,7 +9,10 @@ const TextButton = (props: any) => {
         alignItems: 'center',
         ...props.style
       }}>
-      <Text>{props.title}</Text>
+      <>
+        {props.title && props.title}
+        {props.children}
+      </>
     </TouchableOpacity>
   );
 }

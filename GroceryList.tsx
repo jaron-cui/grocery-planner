@@ -1,8 +1,8 @@
 import { IngredientList } from "./src/recipe";
-import { FlatList, Text, View, Button, TouchableOpacity } from "react-native";
-import { GroceryListItem } from "./src/data";
-import React, { useState } from "react";
-import { CheckBox } from "react-native-elements";
+import { FlatList, Text, View, Button, TouchableOpacity, TextInput, Modal } from "react-native";
+import { DATASTORE, GroceryListItem } from "./src/data";
+import React, { useEffect, useState } from "react";
+import { CheckBox, Icon } from "react-native-elements";
 import TextButton from "./TextButton";
 
 interface GroceryListProps {
@@ -12,70 +12,76 @@ interface GroceryListProps {
 }
 
 const GroceryList = ({ items, addItem, removeItem }: GroceryListProps) => {
-  const [allowSelection, setAllowSelection] = useState<boolean>(true);
-  const [selected, setSelected] = useState<number[]>([]);
-
-  removeItem = (index: number) => {
-    setSelected(selected.map(
-      (selectedIndex: number) => selectedIndex < index ? selectedIndex : selectedIndex - 1));
-    removeItem(index);
-  };
-
-  const toggleAllowSelection = () => {
-    if (allowSelection) {
-      setSelected([]);
-      setAllowSelection(false);
-    } else {
-      setAllowSelection(true);
-    }
-  }
-  const isSelected = (index: number) => selected.includes(index);
-  const toggleIndex = (index: number) => (
-    () => {
-      if (!allowSelection) {
-        return;
-      }
-      if (isSelected(index)) {
-        setSelected(selected.filter(i => i !== index));
-      } else {
-        setSelected([...selected, index]);
-      }
-    }
-  );
+  const [allowEditing, setAllowEditing] = useState<boolean>(true);
+  const [showSearch, setShowSearch] = useState<boolean>(false);
 
   return (
     <View style={{justifyContent: 'flex-start', width:'500px'}}>
-      <View style={{flexDirection: 'row', alignItems: 'center'}}>
-        <TextButton style={{width: '80px'}} title={allowSelection ? 'Cancel' : 'Select'} onPress={toggleAllowSelection}/>
-      </View>
-      <FlatList style={{minHeight: 400}} data={items} renderItem={
+      {/*<View style={{flexDirection: 'row', alignItems: 'center'}}>
+        <TextButton style={{width: '80px'}} title={allowEditing ? 'Cancel' : 'Edit'} onPress={() => setAllowEditing(!allowEditing)}/>
+  </View>*/}
+      <FlatList style={{minHeight: 100}} data={items} renderItem={
         info => (
           <GroceryListElement
             item={info.item}
-            showSelection={allowSelection}
-            selected={isSelected(info.index)}
-            toggleSelection={toggleIndex(info.index)}
+            editing={allowEditing}
+            deleteItem={() => removeItem(info.index)}
           />
         )
       }/>
+      <TextButton onPress={() => setShowSearch(true)}>
+        <Icon name='add'/>
+      </TextButton>
+      <GroceryItemSearch show={showSearch} onSelect={name => {
+        addItem({ name: name, count: 1 });
+        setShowSearch(false);
+      }} />
     </View>
   );
 }
 
 interface GroceryListElementProps {
   item: GroceryListItem;
-  showSelection: boolean;
-  selected: boolean;
-  toggleSelection: () => void;
+  editing: boolean;
+  deleteItem: () => void;
 }
 
-const GroceryListElement = ({ item, showSelection, selected, toggleSelection }: GroceryListElementProps) => {
+const GroceryListElement = ({ item, editing, deleteItem }: GroceryListElementProps) => {
   return (
-    <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center', height: '40px'}} onPress={toggleSelection}>
-      <Text>{item.name}</Text>
-      {showSelection && <CheckBox checked={selected}/>}
-    </TouchableOpacity>
+    <View style={{flexDirection: 'row', alignItems: 'center', height: '40px'}}>
+      {editing && <Icon name='close' onPress={deleteItem}/>}
+      <Text>{item.name} x {item.count}</Text>
+    </View>
   )
+}
+
+interface GroceryItemSearchProps {
+  show: boolean;
+  onSelect: (name: string) => void;
+}
+
+const GroceryItemSearch = ({ show, onSelect }: GroceryItemSearchProps) => {
+  const [items, setItems] = useState<string[]>([]);
+  const [search, setSearch] = useState<string>('');
+
+  useEffect(() => {
+    setItems(DATASTORE.getGroceryCatalogue().map(product => product.name));
+  }, []);
+
+  const curatedItems = () => {
+    return items.filter(name => name.includes(search)).sort((a, b) => a.indexOf(search) - b.indexOf(search));
+  };
+
+  return (
+    <Modal visible={show}>
+      <TextInput autoFocus={true} onChangeText={setSearch}/>
+      <FlatList data={curatedItems()} renderItem={
+        info => (
+          <TextButton onPress={() => onSelect(info.item)}>{info.item}</TextButton>
+        )
+      }/>
+    </Modal>
+  );
 }
 
 export default GroceryList;
